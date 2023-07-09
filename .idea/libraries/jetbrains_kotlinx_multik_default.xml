@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="jetbrains.kotlinx.multik.default" type="repository">
+    <properties maven-id="org.jetbrains.kotlinx:multik-default:0.2.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/multik-default/0.2.2/multik-default-0.2.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/multik-core/0.2.2/multik-core-0.2.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.21/kotlin-stdlib-common-1.8.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/multik-kotlin/0.2.2/multik-kotlin-0.2.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
