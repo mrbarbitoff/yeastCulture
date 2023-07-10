@@ -41,7 +41,7 @@ fun main() {
         val solubleSup35Fraction = cellCulture.map {
             it.sup35MoleculeCount.toDouble() / (it.sup35MoleculeCount + it.aggregateSizes.sum())
         }.average()
-        val psiFraction = cellCulture.map { it.hasPSI }.count { true } / cellCulture.size
+        val psiFraction = cellCulture.map { it.hasPSI }.count { true }.toDouble() / cellCulture.size
 
         outputFile.appendText("${thisPair.first}\t${thisPair.second}\t$psiFraction\t$solubleSup35Fraction\n")
 
