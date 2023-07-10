@@ -18,7 +18,7 @@ fun Double.interpolate(endRange: Double, outN: Int): MutableList<Double> {
     return outSeq
 }
 
-fun main(args: Array<String>) {
+fun main() {
 
     val betaList = 0.0000065.interpolate(endRange = 0.0003, outN = 16)
     val gammaList = 0.006.interpolate(endRange = 0.013, outN = 25)
@@ -28,8 +28,8 @@ fun main(args: Array<String>) {
     if (outputFile.exists()) { outputFile.delete() }
 
     paramPairs.parmap { thisPair ->
-        val cellCulture = mutableListOf<yeastCell>(yeastCell())
-        var cellIndex: Int = 0
+        val cellCulture = mutableListOf<YeastCell>(YeastCell())
+        var cellIndex = 0
         while (cellIndex < cellCulture.size) {
             println("Processing cell $cellIndex ...")
             val newCells = cellCulture[cellIndex].runSimulation(simTime = 1000.0,

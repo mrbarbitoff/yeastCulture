@@ -22,7 +22,7 @@ fun divTimeDaughter(): Double {
     return GammaDistribution(shapeDaughter, 1 / rho).sample() + divTimeMother()
 }
 
-class yeastCell(var sup35MoleculeCount: Int = 46680,
+class YeastCell(var sup35MoleculeCount: Int = 46680,
                 var hsp104MoleculeCount: Int = 3326,
                 var divisionCount: Int = 0,
                 var nextDivisionTime: Double = divTimeDaughter(),
@@ -32,18 +32,18 @@ class yeastCell(var sup35MoleculeCount: Int = 46680,
     var hasPSI = (aggregateSizes.size > 0)
 }
 
-fun yeastCell.updateProteinLevel(timePoint:  Double) {
+fun YeastCell.updateProteinLevel(timePoint:  Double) {
     val timePeriod = timePoint - this.elapsedTime
     this.sup35MoleculeCount += (timePeriod * synthesisSup35).roundToInt()
     this.hsp104MoleculeCount += (timePeriod * synthesisHsp104).roundToInt()
     this.elapsedTime = timePoint
 }
 
-fun yeastCell.divide(): yeastCell {
+fun YeastCell.divide(): YeastCell {
 
     // Creating a daughter cell object, with empty aggregate vector
     this.divisionCount++
-    val daughterCell = yeastCell(aggregateSizes = mutableListOf<Int>(), elapsedTime = this.elapsedTime + 1)
+    val daughterCell = YeastCell(aggregateSizes = mutableListOf<Int>(), elapsedTime = this.elapsedTime + 1)
     daughterCell.nextDivisionTime += this.elapsedTime
 
     // Splitting the aggregates between cells in accordance with size and 60/40 rule
@@ -76,7 +76,7 @@ fun yeastCell.divide(): yeastCell {
     return daughterCell
 }
 
-fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
+fun YeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
 
     // Calculating reaction rates
     val conversionRate = conversionBeta * this.sup35MoleculeCount * this.aggregateSizes.size
@@ -101,8 +101,8 @@ fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
         val cutSite = (1..fragmentSites).random()
         val finalAggregates = mutableListOf<Int>()
 
-        var totalSites: Int = 0
-        var cutMade: Boolean = false
+        var totalSites = 0
+        var cutMade = false
         for (prionAggregate in this.aggregateSizes) {
             if (totalSites + prionAggregate - 1 < cutSite || cutMade) {
                 finalAggregates.add(prionAggregate)
@@ -131,11 +131,11 @@ fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
 
 }
 
-fun yeastCell.runSimulation(simTime: Double,
+fun YeastCell.runSimulation(simTime: Double,
                             conversionBeta: Double,
-                            fragmentationGamma: Double): MutableList<yeastCell> {
+                            fragmentationGamma: Double): MutableList<YeastCell> {
 
-    val offspring = mutableListOf<yeastCell>()
+    val offspring = mutableListOf<YeastCell>()
     while (this.elapsedTime < simTime) {
         // println(this.elapsedTime)
         if (this.elapsedTime >= this.nextDivisionTime) {
