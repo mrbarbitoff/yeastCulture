@@ -12,6 +12,7 @@ const val rho: Double = 31.03
 const val shapeDaughter: Double = rho * 0.21 * 60
 const val shape: Double = rho * 1.16 * 60
 const val sizeThreshold: Int = 30
+const val minAggSize: Int = 5
 
 fun divTimeMother(): Double {
     return GammaDistribution(shape, 1 / rho).sample()
@@ -23,6 +24,7 @@ fun divTimeDaughter(): Double {
 
 class yeastCell(var sup35MoleculeCount: Int = 46680,
                 var hsp104MoleculeCount: Int = 3326,
+                var divisionCount: Int = 0,
                 var nextDivisionTime: Double = divTimeDaughter(),
                 var elapsedTime: Double = 0.0,
                 var aggregateSizes: MutableList<Int> = mutableListOf(20, 20, 20, 40, 40, 40, 40, 50)
@@ -40,7 +42,9 @@ fun yeastCell.updateProteinLevel(timePoint:  Double) {
 fun yeastCell.divide(): yeastCell {
 
     // Creating a daughter cell object, with empty aggregate vector
+    this.divisionCount++
     val daughterCell = yeastCell(aggregateSizes = mutableListOf<Int>(), elapsedTime = this.elapsedTime + 1)
+    daughterCell.nextDivisionTime += this.elapsedTime
 
     // Splitting the aggregates between cells in accordance with size and 60/40 rule
     val remainingAggregates = mutableListOf<Int>()
@@ -69,13 +73,7 @@ fun yeastCell.divide(): yeastCell {
     this.nextDivisionTime += divTimeMother()
     this.elapsedTime += 1
 
-    println(daughterCell.aggregateSizes)
-    println(daughterCell.hasPSI)
     return daughterCell
-}
-
-fun cutAggregate(sizeVector: MutableList<Int>): MutableList<Int> {
-    return sizeVector
 }
 
 fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
@@ -87,7 +85,7 @@ fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
     val totalReactionRate = totalSynthesisRate + conversionRate + fragmentationRate
 
     // Sampling reaction interval and reaction selection random value
-    val timeInterval = ExponentialDistribution(totalReactionRate).sample()
+    val timeInterval = ExponentialDistribution(1 / totalReactionRate).sample()
     this.elapsedTime += timeInterval
     val reactionSelector = UniformRealDistribution(0.0, 1.0).sample() * totalReactionRate
 
@@ -98,9 +96,32 @@ fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
     } else if (reactionSelector < totalSynthesisRate) {
         // Synthesis of Hsp104
         this.hsp104MoleculeCount += 1
-    } else if (reactionSelector < totalReactionRate + fragmentationRate) {
+    } else if (reactionSelector < (totalSynthesisRate + fragmentationRate)) {
         // Aggregate fragmentation with a separate function
-        this.aggregateSizes = cutAggregate(this.aggregateSizes)
+        val cutSite = (1..fragmentSites).random()
+        val finalAggregates = mutableListOf<Int>()
+
+        var totalSites: Int = 0
+        var cutMade: Boolean = false
+        for (prionAggregate in this.aggregateSizes) {
+            if (totalSites + prionAggregate - 1 < cutSite || cutMade) {
+                finalAggregates.add(prionAggregate)
+                totalSites += prionAggregate - 1
+            } else {
+                val leftSize = (cutSite - totalSites)
+                val rightSize = prionAggregate - leftSize
+                for (aggPiece in listOf<Int>(leftSize, rightSize)) {
+                    if (aggPiece < minAggSize) {
+                        this.sup35MoleculeCount += aggPiece
+                    } else {
+                        finalAggregates.add(aggPiece)
+                    }
+                }
+                cutMade = true
+            }
+        }
+        this.aggregateSizes = finalAggregates
+        if (this.aggregateSizes.size == 0) this.hasPSI = false
     } else {
         // Conversion of one monomer onto a random aggregate
         val extendingAggregate = (0 until this.aggregateSizes.size).random()
@@ -108,4 +129,25 @@ fun yeastCell.nextReaction(conversionBeta: Double, fragmentationGamma: Double) {
         this.sup35MoleculeCount -= 1
     }
 
+}
+
+fun yeastCell.runSimulation(simTime: Double,
+                            conversionBeta: Double,
+                            fragmentationGamma: Double): MutableList<yeastCell> {
+
+    val offspring = mutableListOf<yeastCell>()
+    while (this.elapsedTime < simTime) {
+        // println(this.elapsedTime)
+        if (this.elapsedTime >= this.nextDivisionTime) {
+            // println("Division")
+            offspring.add(this.divide())
+        } else if (this.hasPSI) {
+            // println("Reaction")
+            this.nextReaction(conversionBeta = conversionBeta, fragmentationGamma = fragmentationGamma)
+        } else {
+            // println("Protein levels update")
+            this.updateProteinLevel(this.nextDivisionTime)
+        }
+    }
+    return offspring
 }
